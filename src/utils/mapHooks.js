@@ -213,6 +213,69 @@ export const useTyphoonLayer = (mapInstanceRef, typhoonLayerRef, mapReady, libLo
     map.addOverLay(futureLine);
     layer.push(futureLine);
     
+    // 绘制24小时警戒线（红色实线）
+    if (t.warningLines && t.warningLines.h24) {
+      const h24Path = t.warningLines.h24.map(p => new T.LngLat(p[1], p[0]));
+      const h24Line = new T.Polyline(h24Path, { 
+        color: '#dc2626', 
+        weight: 1.5, 
+        opacity: 0.9
+      });
+      map.addOverLay(h24Line);
+      layer.push(h24Line);
+      
+      // 添加24小时标签（竖向完整文字）
+      const h24LabelSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='20' height='120' style='pointer-events: none;'>
+        <text x='10' y='20' text-anchor='middle' font-size='12' fill='#dc2626' font-weight='bold'>24</text>
+        <text x='10' y='35' text-anchor='middle' font-size='12' fill='#dc2626' font-weight='bold'>小</text>
+        <text x='10' y='50' text-anchor='middle' font-size='12' fill='#dc2626' font-weight='bold'>时</text>
+        <text x='10' y='65' text-anchor='middle' font-size='12' fill='#dc2626' font-weight='bold'>警</text>
+        <text x='10' y='80' text-anchor='middle' font-size='12' fill='#dc2626' font-weight='bold'>戒</text>
+        <text x='10' y='95' text-anchor='middle' font-size='12' fill='#dc2626' font-weight='bold'>线</text>
+      </svg>`;
+      const h24LabelIcon = new T.Icon({
+        iconUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(h24LabelSvg),
+        iconSize: new T.Point(20, 120),
+        iconAnchor: new T.Point(10, 60)
+      });
+      const h24LabelPos = t.warningLines.h24[0];
+      const h24Label = new T.Marker(new T.LngLat(h24LabelPos[1], h24LabelPos[0]), { icon: h24LabelIcon });
+      map.addOverLay(h24Label);
+      layer.push(h24Label);
+    }
+
+    // 绘制48小时警戒线（蓝色虚线）
+    if (t.warningLines && t.warningLines.h48) {
+      const h48Path = t.warningLines.h48.map(p => new T.LngLat(p[1], p[0]));
+      const h48Line = new T.Polyline(h48Path, { 
+        color: '#3b82f6',  
+        weight: 1.5, 
+        opacity: 0.8,
+        lineStyle: 'dashed'
+      });
+      map.addOverLay(h48Line);
+      layer.push(h48Line);
+      
+      // 添加48小时标签（竖向完整文字）
+      const h48LabelSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='20' height='130' style='pointer-events: none;'>
+        <text x='10' y='20' text-anchor='middle' font-size='12' fill='#3b82f6' font-weight='bold'>48</text>
+        <text x='10' y='38' text-anchor='middle' font-size='12' fill='#3b82f6' font-weight='bold'>小</text>
+        <text x='10' y='53' text-anchor='middle' font-size='12' fill='#3b82f6' font-weight='bold'>时</text>
+        <text x='10' y='68' text-anchor='middle' font-size='12' fill='#3b82f6' font-weight='bold'>警</text>
+        <text x='10' y='83' text-anchor='middle' font-size='12' fill='#3b82f6' font-weight='bold'>戒</text>
+        <text x='10' y='98' text-anchor='middle' font-size='12' fill='#3b82f6' font-weight='bold'>线</text>
+      </svg>`;
+      const h48LabelIcon = new T.Icon({
+        iconUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(h48LabelSvg),
+        iconSize: new T.Point(20, 130),
+        iconAnchor: new T.Point(10, 65)
+      });
+      const h48LabelPos = t.warningLines.h48[0];
+      const h48Label = new T.Marker(new T.LngLat(h48LabelPos[1], h48LabelPos[0]), { icon: h48LabelIcon });
+      map.addOverLay(h48Label);
+      layer.push(h48Label);
+    }
+    
     // 台风图标（SVG+文本）
     const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='60' height='80' viewBox='0 0 60 80' style='pointer-events: none;'>
       <g>
