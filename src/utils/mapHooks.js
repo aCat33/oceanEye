@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { TILE_SOURCES, generateWindCirclePoints } from './mapUtils';
 import { TYPHOON_DATA, TYPHOON_INTENSITY } from './dataGenerator';
+import typhoonSprite from '../icons/typhoonstatic.png';
 
 export const useMapInitialization = (
   libLoaded,
@@ -173,10 +174,9 @@ export const useTyphoonLayer = (mapInstanceRef, typhoonLayerRef, mapReady, libLo
     const t = TYPHOON_DATA; 
     const currentPos = t.path[t.currentIdx];
 
+    // 只绘制12级风圈（红色）
     const windLevels = [
-        { level: 7, radii: t.windRadii[7], color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.15 },
-        { level: 10, radii: t.windRadii[10], color: '#eab308', fillColor: '#eab308', fillOpacity: 0.25 },
-        { level: 12, radii: t.windRadii[12], color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.35 }
+        { level: 12, radii: currentPos[8], color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.35 }
     ];
     
     // 绘制风圈
@@ -440,14 +440,71 @@ export const useTyphoonLayer = (mapInstanceRef, typhoonLayerRef, mapReady, libLo
       layer.push(h48Label);
     }
     
-    // 台风图标（使用PNG图片）
-    const typhoonIcon = new T.Icon({
-      iconUrl: require('../icons/typhoon.png'),
-      iconSize: new T.Point(60, 60),
-      iconAnchor: new T.Point(30, 30)
-    });
-    const marker = new T.Marker(new T.LngLat(currentPos[1], currentPos[0]), { icon: typhoonIcon });
-    map.addOverLay(marker);
-    layer.push(marker);
+    // 台风图标（使用精灵图）
+    // 根据当前台风强度确定精灵图位置（横向排列）
+    const currentIntensity = currentPos[2]; // TD, TS, STS, TY, STY, SuperTY
+    const intensityMap = {
+      'STS': 0,     // 强热带风暴 - 绿色
+      'TS': 1,      // 热带风暴 - 蓝色
+      'TD': 2,      // 热带低压 - 黄色
+      'TY': 3,      // 台风 - 橙色
+      'STY': 4,     // 强台风 - 粉色
+      'SuperTY': 5  // 超强台风 - 红色
+    };
+    
+    const spriteIndex = intensityMap[currentIntensity] || 3;
+    const displaySize = 60; // 显示尺寸
+    
+    // 使用Canvas裁剪精灵图
+    const canvas = document.createElement('canvas');
+    canvas.width = displaySize;
+    canvas.height = displaySize;
+    const ctx = canvas.getContext('2d');
+    
+    const img = new Image();
+    img.onload = () => {
+      // 精灵图有7个图标（6个台风等级 + 1个三角形），横向排列
+      const spriteWidth = img.width;
+      const spriteHeight = img.height;
+      const singleIconWidth = spriteWidth / 7; // 分成7份
+      
+      // 清除画布并设置透明背景
+      ctx.clearRect(0, 0, displaySize, displaySize);
+      
+      // 从横向精灵图中裁剪对应位置的图标，并缩放到显示尺寸
+      ctx.drawImage(
+        img, 
+        spriteIndex * singleIconWidth, 0,           // 源图裁剪起点
+        singleIconWidth, spriteHeight,              // 源图裁剪尺寸
+        0, 0,                                        // 目标画布起点
+        displaySize, displaySize                     // 目标画布尺寸
+      );
+      
+      const iconUrl = canvas.toDataURL('image/png');
+      
+      // 创建带旋转动画的SVG图标（逆时针）
+      const rotatingSvg = `<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${displaySize}" height="${displaySize}" viewBox="0 0 ${displaySize} ${displaySize}">
+        <defs>
+          <style>
+            @keyframes rotate {
+              from { transform: rotate(0deg); }
+              to { transform: rotate(-360deg); }
+            }
+          </style>
+        </defs>
+        <image href="${iconUrl}" x="0" y="0" width="${displaySize}" height="${displaySize}" style="animation: rotate 2s linear infinite; transform-origin: center center;" />
+      </svg>`;
+      
+      const typhoonIcon = new T.Icon({
+        iconUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(rotatingSvg),
+        iconSize: new T.Point(displaySize, displaySize),
+        iconAnchor: new T.Point(displaySize/2, displaySize/2)
+      });
+      
+      const marker = new T.Marker(new T.LngLat(currentPos[1], currentPos[0]), { icon: typhoonIcon });
+      map.addOverLay(marker);
+      layer.push(marker);
+    };
+    img.src = typhoonSprite;
   }, [libLoaded, mapReady, mapInstanceRef, typhoonLayerRef]);
 };
