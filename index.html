@@ -1,0 +1,1194 @@
+import React, { useState, useEffect, useRef, useMemo } from 'react';
+
+// ------------------------------------------------------------------
+// 0. 内置图标组件 (替换 lucide-react 以解决环境加载错误)
+// ------------------------------------------------------------------
+const IconWrapper = ({ children, size = 24, className = "", ...props }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width={size} 
+    height={size} 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className} 
+    {...props}
+  >
+    {children}
+  </svg>
+);
+
+const Ship = (props) => <IconWrapper {...props}><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.9 5.8 2.5 8" /><path d="M5 14L4 14" /><path d="M10 14L9 14" /><path d="M15 14L14 14" /></IconWrapper>;
+const Droplet = (props) => <IconWrapper {...props}><path d="M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z" /></IconWrapper>;
+const Navigation = (props) => <IconWrapper {...props}><polygon points="3 11 22 2 13 21 11 13 3 11" /></IconWrapper>;
+const Layers = (props) => <IconWrapper {...props}><polygon points="12 2 2 7 12 12 22 7 12 2" /><polyline points="2 17 12 22 22 17" /><polyline points="2 12 12 17 22 12" /></IconWrapper>;
+const X = (props) => <IconWrapper {...props}><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></IconWrapper>;
+const Target = (props) => <IconWrapper {...props}><circle cx="12" cy="12" r="10" /><circle cx="12" cy="12" r="6" /><circle cx="12" cy="12" r="2" /></IconWrapper>;
+const MapIcon = (props) => <IconWrapper {...props}><polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6" /><line x1="8" y1="2" x2="8" y2="18" /><line x1="16" y1="6" x2="16" y2="22" /></IconWrapper>;
+const Anchor = (props) => <IconWrapper {...props}><circle cx="12" cy="5" r="3" /><line x1="12" y1="22" x2="12" y2="8" /><path d="M5 12H2a10 10 0 0 0 20 0h-3" /></IconWrapper>;
+const Loader2 = (props) => <IconWrapper {...props} className={`animate-spin ${props.className || ''}`}><path d="M21 12a9 9 0 1 1-6.219-8.56" /></IconWrapper>;
+const Mountain = (props) => <IconWrapper {...props}><path d="m8 3 4 8 5-5 5 15H2L8 3z" /></IconWrapper>;
+const Wind = (props) => <IconWrapper {...props}><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2" /><path d="M9.6 4.6A2 2 0 1 1 11 8H2" /><path d="M12.6 19.4A2 2 0 1 0 14 16H2" /></IconWrapper>;
+const AlertTriangle = (props) => <IconWrapper {...props}><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" /><line x1="12" y1="9" x2="12" y2="13" /><line x1="12" y1="17" x2="12.01" y2="17" /></IconWrapper>;
+const CloudRain = (props) => <IconWrapper {...props}><line x1="16" y1="13" x2="16" y2="21" /><line x1="8" y1="13" x2="8" y2="21" /><line x1="12" y1="15" x2="12" y2="23" /><path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" /></IconWrapper>;
+const Sun = (props) => <IconWrapper {...props}><circle cx="12" cy="12" r="5" /><line x1="12" y1="1" x2="12" y2="3" /><line x1="12" y1="21" x2="12" y2="23" /><line x1="4.22" y1="4.22" x2="5.64" y2="5.64" /><line x1="18.36" y1="18.36" x2="19.78" y2="19.78" /><line x1="1" y1="12" x2="3" y2="12" /><line x1="21" y1="12" x2="23" y2="12" /><line x1="4.22" y1="19.78" x2="5.64" y2="18.36" /><line x1="18.36" y1="5.64" x2="19.78" y2="4.22" /></IconWrapper>;
+const CloudLightning = (props) => <IconWrapper {...props}><path d="M19 16.9A5 5 0 0 0 18 7h-1.26a8 8 0 1 0-11.62 9" /><polyline points="13 11 9 17 15 17 11 23" /></IconWrapper>;
+const Cloud = (props) => <IconWrapper {...props}><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z" /></IconWrapper>;
+const ZoomIn = (props) => <IconWrapper {...props}><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" /></IconWrapper>;
+const User = (props) => <IconWrapper {...props}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></IconWrapper>;
+const Calendar = (props) => <IconWrapper {...props}><rect x="3" y="4" width="18" height="18" rx="2" ry="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></IconWrapper>;
+const Briefcase = (props) => <IconWrapper {...props}><rect x="2" y="7" width="20" height="14" rx="2" ry="2" /><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" /></IconWrapper>;
+const Activity = (props) => <IconWrapper {...props}><polyline points="22 12 18 12 15 21 9 3 6 12 2 12" /></IconWrapper>;
+const Clock = (props) => <IconWrapper {...props}><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></IconWrapper>;
+const FileText = (props) => <IconWrapper {...props}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><line x1="16" y1="13" x2="8" y2="13" /><line x1="16" y1="17" x2="8" y2="17" /><polyline points="10 9 9 9 8 9" /></IconWrapper>;
+const TrendingUp = (props) => <IconWrapper {...props}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18" /><polyline points="17 6 23 6 23 12" /></IconWrapper>;
+const Users = (props) => <IconWrapper {...props}><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 0 0-3-3.87" /><path d="M16 3.13a4 4 0 0 1 0 7.75" /></IconWrapper>;
+const ChevronDown = (props) => <IconWrapper {...props}><polyline points="6 9 12 15 18 9" /></IconWrapper>;
+const ChevronUp = (props) => <IconWrapper {...props}><polyline points="18 15 12 9 6 15" /></IconWrapper>;
+const ChevronRight = (props) => <IconWrapper {...props}><polyline points="9 18 15 12 9 6" /></IconWrapper>;
+const Server = (props) => <IconWrapper {...props}><rect x="2" y="2" width="20" height="8" rx="2" ry="2" /><rect x="2" y="14" width="20" height="8" rx="2" ry="2" /><line x1="6" y1="6" x2="6.01" y2="6" /><line x1="6" y1="18" x2="6.01" y2="18" /></IconWrapper>;
+const Wifi = (props) => <IconWrapper {...props}><path d="M5 12.55a11 11 0 0 1 14.08 0" /><path d="M1.42 9a16 16 0 0 1 21.16 0" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" /><line x1="12" y1="20" x2="12.01" y2="20" /></IconWrapper>;
+const WifiOff = (props) => <IconWrapper {...props}><line x1="1" y1="1" x2="23" y2="23" /><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55" /><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39" /><path d="M10.71 5.05A16 16 0 0 1 22.58 9" /><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88" /><path d="M8.53 16.11a6 6 0 0 1 6.95 0" /><line x1="12" y1="20" x2="12.01" y2="20" /></IconWrapper>;
+const Bell = (props) => <IconWrapper {...props}><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.73 21a2 2 0 0 1-3.46 0" /></IconWrapper>;
+const AlertOctagon = (props) => <IconWrapper {...props}><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></IconWrapper>;
+const RouteIcon = (props) => <IconWrapper {...props}><circle cx="6" cy="19" r="3" /><path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" /><circle cx="18" cy="5" r="3" /></IconWrapper>;
+const Play = (props) => <IconWrapper {...props}><polygon points="5 3 19 12 5 21 5 3" /></IconWrapper>;
+const Pause = (props) => <IconWrapper {...props}><rect x="6" y="4" width="4" height="16" /><rect x="14" y="4" width="4" height="16" /></IconWrapper>;
+const StopCircle = (props) => <IconWrapper {...props}><circle cx="12" cy="12" r="10" /><rect x="9" y="9" width="6" height="6" /></IconWrapper>;
+const History = (props) => <IconWrapper {...props}><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 12" /><path d="M3 3v9h9" /><path d="M12 7v5l4 2" /></IconWrapper>;
+const FileUp = (props) => <IconWrapper {...props}><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" /><polyline points="14 2 14 8 20 8" /><path d="M12 18v-6" /><path d="m9 15 3-3 3 3" /></IconWrapper>;
+const FileJson = (props) => <IconWrapper {...props}><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><polyline points="14 2 14 8 20 8" /><path d="M10 12a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1" /><path d="M14 16a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1" /></IconWrapper>;
+const PenTool = (props) => <IconWrapper {...props}><path d="M12 19l7-7 3 3-7 7-3-3z" /><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-17" /><path d="M2 2l7.586 7.586" /><circle cx="11" cy="11" r="2" /></IconWrapper>;
+const Save = (props) => <IconWrapper {...props}><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" /><polyline points="17 21 17 13 7 13 7 21" /><polyline points="7 3 7 8 15 8" /></IconWrapper>;
+const Trash2 = (props) => <IconWrapper {...props}><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /><line x1="10" y1="11" x2="10" y2="17" /><line x1="14" y1="11" x2="14" y2="17" /></IconWrapper>;
+const CornerUpLeft = (props) => <IconWrapper {...props}><polyline points="9 14 4 9 9 4" /><path d="M20 20v-7a4 4 0 0 0-4-4H4" /></IconWrapper>;
+const Search = (props) => <IconWrapper {...props}><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /></IconWrapper>;
+
+
+/**
+ * ------------------------------------------------------------------
+ * 1. 配置常量与算法工具
+ * ------------------------------------------------------------------
+ */
+
+// 地图瓦片源配置
+const TILE_SOURCES = {
+    ONLINE: {
+        url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+        name: '在线 (CartoDB Dark)',
+        attribution: '&copy; OpenStreetMap &copy; CARTO'
+    },
+    OFFLINE: {
+        url: 'http://localhost:8080/tiles/{z}/{x}/{y}.png', 
+        name: '离线 (本地服务器)',
+        attribution: '&copy; Local Data'
+    }
+};
+
+// 偏航阈值 (海里)
+const DEVIATION_THRESHOLD_NM = 5.0; 
+
+// 辅助算法：计算点到线段的最短距离 (米)
+const getDistanceToSegmentMeters = (pLat, pLon, vLat, vLon, wLat, wLon) => {
+    const latToM = 111132;
+    const lonToM = 111132 * Math.cos(pLat * Math.PI / 180);
+    const x = pLon * lonToM; const y = pLat * latToM;
+    const x1 = vLon * lonToM; const y1 = vLat * latToM;
+    const x2 = wLon * lonToM; const y2 = wLat * latToM;
+    const l2 = (x1-x2)*(x1-x2) + (y1-y2)*(y1-y2);
+    if (l2 === 0) return Math.sqrt((x-x1)*(x-x1) + (y-y1)*(y-y1));
+    let t = ((x - x1) * (x2 - x1) + (y - y1) * (y2 - y1)) / l2;
+    t = Math.max(0, Math.min(1, t));
+    const projX = x1 + t * (x2 - x1);
+    const projY = y1 + t * (y2 - y1);
+    return Math.sqrt((x - projX)*(x - projX) + (y - projY)*(y - projY));
+};
+
+// 核心算法：计算点到多段线的最短距离 (返回海里)
+const calculateCrossTrackError = (shipLat, shipLon, routePoints) => {
+    if (!routePoints || routePoints.length < 2) return 0;
+    let minDistanceMeters = Infinity;
+    for (let i = 0; i < routePoints.length - 1; i++) {
+        const p1 = routePoints[i];
+        const p2 = routePoints[i+1];
+        const dist = getDistanceToSegmentMeters(shipLat, shipLon, p1[0], p1[1], p2[0], p2[1]);
+        if (dist < minDistanceMeters) minDistanceMeters = dist;
+    }
+    return minDistanceMeters / 1852;
+};
+
+// 辅助算法：计算目标点 (用于风圈绘制)
+const calculateDestinationPoint = (startLat, startLon, distanceMeters, bearing) => {
+    const R = 6378137;
+    const δ = distanceMeters / R;
+    const θ = bearing * (Math.PI / 180);
+    const φ1 = startLat * (Math.PI / 180);
+    const λ1 = startLon * (Math.PI / 180);
+    const φ2 = Math.asin(Math.sin(φ1) * Math.cos(δ) + Math.cos(φ1) * Math.sin(δ) * Math.cos(θ));
+    const λ2 = λ1 + Math.atan2(Math.sin(θ) * Math.sin(δ) * Math.cos(φ1), Math.cos(δ) - Math.sin(φ1) * Math.sin(φ2));
+    return [φ2 * (180 / Math.PI), λ2 * (180 / Math.PI)];
+};
+
+// 辅助算法：生成四象限风圈多边形
+const generateWindCirclePoints = (center, radiiObj) => {
+    const points = []; const step = 5;
+    for (let angle = 0; angle <= 360; angle += step) {
+        let r_km = 0;
+        if (angle >= 0 && angle < 90) r_km = radiiObj.ne;
+        else if (angle >= 90 && angle < 180) r_km = radiiObj.se;
+        else if (angle >= 180 && angle < 270) r_km = radiiObj.sw;
+        else r_km = radiiObj.nw;
+        points.push(calculateDestinationPoint(center[0], center[1], r_km * 1000, angle));
+    }
+    return points;
+};
+
+/**
+ * ------------------------------------------------------------------
+ * 2. 模拟数据定义
+ * ------------------------------------------------------------------
+ */
+
+const TYPHOON_DATA = {
+  id: 'T-202409',
+  name: '超强台风“海龙” (HAILONG)',
+  level: '16级 (55m/s)',
+  path: [[15.2, 136.5], [16.8, 134.0], [18.5, 131.5], [20.1, 129.0], [21.8, 126.5], [23.5, 124.0], [25.2, 121.5], [27.0, 119.0]],
+  currentIdx: 4,
+  windRadii: { 
+      7: {ne:350, se:300, sw:200, nw:280}, 
+      10: {ne:150, se:120, sw:80, nw:100}, 
+      12: {ne:80, se:60, sw:40, nw:50} 
+  }
+};
+
+const generateData = () => {
+  const ships = [];
+  const rigs = [];
+  const destinations = ["Shanghai", "Singapore", "Rotterdam", "Busan", "Ningbo"];
+  const operators = ["CNOOC", "Shell", "BP", "TotalEnergies", "Sinopec"];
+  
+  const crewRoles = [
+      { role: "船长 (Captain)", certs: ["Master Unlimited", "GMDSS", "ECDIS"] },
+      { role: "大副 (Chief Off)", certs: ["Chief Mate", "GMDSS", "SSO"] },
+      { role: "轮机长 (Chief Eng)", certs: ["Chief Engineer", "High Voltage"] },
+      { role: "二副 (2nd Off)", certs: ["OOW Deck", "GMDSS"] }
+  ];
+
+  for (let i = 0; i < 40; i++) {
+    const lat = 25 + Math.random() * 15;
+    const lon = 118 + Math.random() * 10;
+    
+    // 生成偏航数据：每6艘船有1艘严重偏航
+    const isDeviating = i % 6 === 0;
+    let deviationOffset = isDeviating ? 2.5 : 0.01; 
+    
+    // 生成更复杂的计划航线 (5-8个航路点)
+    const routePointsCount = 5 + Math.floor(Math.random() * 3);
+    const plannedRoute = [];
+    const startLat = lat - 5 + deviationOffset;
+    const startLon = lon - 5 + deviationOffset;
+    const endLat = lat + 5 + deviationOffset;
+    const endLon = lon + 5 + deviationOffset;
+    
+    for(let k = 0; k <= routePointsCount; k++) {
+        const fraction = k / routePointsCount;
+        // 添加一些随机曲率，使航线看起来不那么生硬
+        const curveLat = (Math.random() - 0.5) * 2.0 * Math.sin(fraction * Math.PI);
+        const curveLon = (Math.random() - 0.5) * 2.0 * Math.sin(fraction * Math.PI);
+        
+        const wpLat = startLat + (endLat - startLat) * fraction + curveLat;
+        const wpLon = startLon + (endLon - startLon) * fraction + curveLon;
+        
+        // 确保中间某个点就是船当前位置附近的点（如果是正常行驶）
+        // 或者是偏离点（如果是偏航）
+        if (Math.abs(fraction - 0.5) < 0.1 && !isDeviating) {
+             plannedRoute.push([lat, lon]); // 强制经过当前点附近
+        } else {
+             plannedRoute.push([wpLat, wpLon]);
+        }
+    }
+    // 简单平滑处理，确保首尾大致方向正确
+    plannedRoute[0] = [startLat, startLon];
+    plannedRoute[plannedRoute.length - 1] = [endLat, endLon];
+
+    // 生成历史航迹 (回放用)
+    const historyPath = [];
+    let hLat = lat;
+    let hLon = lon;
+    for(let k=0; k<50; k++) {
+        historyPath.unshift([hLat, hLon]);
+        hLat -= (Math.random() - 0.3) * 0.05; // 简单的随机回溯生成
+        hLon -= (Math.random() - 0.5) * 0.05;
+    }
+    historyPath.push([lat, lon]); // 确保包含当前点
+
+    const xte = calculateCrossTrackError(lat, lon, plannedRoute);
+    const isAlarm = xte > DEVIATION_THRESHOLD_NM;
+
+    const crewList = crewRoles.map((cr, idx) => ({
+        id: `crew-${i}-${idx}`,
+        name: `Crew ${1000 + i * 10 + idx}`,
+        role: cr.role,
+        certs: cr.certs,
+        status: "On Duty"
+    }));
+
+    ships.push({
+      id: `S-CN-${i}`,
+      name: isAlarm ? `⚠️ 严重偏航-S${i}` : `中远海运 ${100 + i}`,
+      type: 'ship',
+      lat: lat,
+      lon: lon,
+      course: Math.floor(Math.random() * 360),
+      speed: (10 + Math.random() * 10).toFixed(1),
+      destination: destinations[i % destinations.length],
+      eta: `${new Date().getMonth()+1}-${new Date().getDate() + Math.floor(Math.random()*5)} 14:00`,
+      imo: 9000000 + i,
+      crewList: crewList,
+      flagState: "China",
+      buildYear: 2015 + Math.floor(Math.random() * 8),
+      plannedRoute: plannedRoute, 
+      historyPath: historyPath,
+      xte: xte, 
+      isAlarm: isAlarm 
+    });
+  }
+  
+  const rigLocations = [
+    { lat: 19.5, lon: 113.5, name: "南海一号" }, { lat: 18.2, lon: 114.2, name: "流花 11-1" },
+    { lat: 38.5, lon: 120.5, name: "渤中 19-6" }, { lat: 26.5, lon: -90.5, name: "墨西哥湾 A" },
+    { lat: 27.0, lon: -89.0, name: "墨西哥湾 B" }, { lat: 56.5, lon: 3.5, name: "北海布伦特" },
+    { lat: 45.6, lon: 84.9, name: "克拉玛依油田" }, { lat: 44.8, lon: 88.2, name: "准东油田" }
+  ];
+  rigLocations.forEach((loc, idx) => {
+    rigs.push({
+      id: `R-${idx}`, name: loc.name, type: 'rig', lat: loc.lat, lon: loc.lon,
+      status: Math.random() > 0.2 ? '正常' : '维护',
+      operator: operators[idx % operators.length], depth: 100 + Math.floor(Math.random() * 2000),
+      dailyOutput: (5000 + Math.random()*5000).toFixed(0), 
+      productionHistory: Array(30).fill(0).map(()=>4000+Math.random()*3000),
+      lastMaintenance: "2024-08-15"
+    });
+  });
+  return [...ships, ...rigs];
+};
+
+const generateWeatherData = () => {
+  const points = [];
+  for (let lat = 5; lat < 55; lat += 4) {
+    for (let lon = 100; lon < 150; lon += 4) {
+        const rand = Math.random();
+        let type = 'Clear';
+        if (rand > 0.7) type = 'Cloudy'; if (rand > 0.85) type = 'Rain'; if (rand > 0.95) type = 'Storm';
+        const typhoonCenter = TYPHOON_DATA.path[TYPHOON_DATA.currentIdx];
+        const distToTyphoon = Math.sqrt(Math.pow(lat - typhoonCenter[0], 2) + Math.pow(lon - typhoonCenter[1], 2));
+        let windSpeed = 10 + Math.random() * 15;
+        if (distToTyphoon < 10) windSpeed += (10 - distToTyphoon) * 5; 
+        points.push({ lat, lon, type, windDir: Math.floor(Math.random() * 360), windSpeed: windSpeed.toFixed(1), temp: (30 - (lat - 10) * 0.5 + Math.random() * 2).toFixed(1) });
+    }
+  }
+  return points;
+};
+
+/**
+ * ------------------------------------------------------------------
+ * 3. 子组件
+ * ------------------------------------------------------------------
+ */
+
+const ProductionChart = ({ data }) => {
+    if (!data || data.length === 0) return null;
+    const max = Math.max(...data); const min = Math.min(...data); const range = max - min || 1;
+    const points = data.map((val, idx) => `${(idx / (data.length - 1)) * 280},${40 - ((val - min) / range) * 40}`).join(' ');
+    return (
+        <div className="mt-2 bg-slate-900/50 p-3 rounded border border-slate-700">
+            <div className="flex justify-between text-[10px] text-slate-400 mb-2"><span className="font-semibold text-slate-300">月产量趋势</span><span className="text-green-400 font-mono">Max: {max.toFixed(0)}</span></div>
+            <svg width="100%" height={40} className="overflow-visible"><polyline points={points} fill="none" stroke="#fbbf24" strokeWidth="2" vectorEffect="non-scaling-stroke"/></svg>
+        </div>
+    );
+};
+
+const CrewList = ({ crew }) => {
+    const [expanded, setExpanded] = useState(false);
+    if (!crew) return null;
+    const displayList = expanded ? crew : crew.slice(0, 2);
+    return (
+        <div className="mt-2 bg-slate-900/50 rounded border border-slate-700 overflow-hidden">
+            <div className="p-2 bg-slate-800/80 text-xs font-bold text-slate-300 flex justify-between items-center cursor-pointer hover:bg-slate-700 transition-colors" onClick={() => setExpanded(!expanded)}>
+                <div className="flex items-center gap-2"><Users size={12} className="text-blue-400"/> 核心船员 ({crew.length})</div>
+                {expanded ? <ChevronUp size={12}/> : <ChevronDown size={12}/>}
+            </div>
+            <div className="divide-y divide-slate-700/50">
+                {displayList.map(c => (
+                    <div key={c.id} className="p-2 text-[11px] hover:bg-slate-800/30 transition-colors">
+                        <div className="flex justify-between items-center mb-1"><span className="font-medium text-slate-200">{c.role}</span><span className="text-green-400/80 scale-90 bg-green-900/20 px-1 rounded">{c.status}</span></div>
+                        <div className="text-slate-400 mb-1.5">{c.name}</div>
+                        <div className="flex flex-wrap gap-1">{c.certs.map(cert => <span key={cert} className="px-1.5 py-0.5 bg-blue-500/10 text-blue-300 rounded border border-blue-500/10 text-[9px]">{cert}</span>)}</div>
+                    </div>
+                ))}
+            </div>
+            {!expanded && crew.length > 2 && <div className="p-1.5 text-[10px] text-center text-slate-500 hover:text-slate-300 cursor-pointer bg-slate-800/80 transition-colors" onClick={(e) => { e.stopPropagation(); setExpanded(true); }}>显示更多 ({crew.length - 2}人)...</div>}
+        </div>
+    );
+};
+
+const RouteDataPreview = ({ ship, onClose }) => {
+    if (!ship || !ship.plannedRoute) return null;
+
+    const geoJson = {
+        type: "Feature",
+        properties: {
+            shipId: ship.id,
+            shipName: ship.name,
+            imo: ship.imo
+        },
+        geometry: {
+            type: "LineString",
+            // GeoJSON 使用 [Lon, Lat] 格式
+            coordinates: ship.plannedRoute.map(p => [p[1], p[0]])
+        }
+    };
+
+    const csvContent = "Sequence,Latitude,Longitude\n" + 
+        ship.plannedRoute.map((p, i) => `${i+1},${p[0].toFixed(6)},${p[1].toFixed(6)}`).join("\n");
+
+    return (
+        <div className="fixed inset-0 z-[3000] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-slate-900 border border-slate-700 rounded-lg shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+                <div className="flex justify-between items-center p-4 border-b border-slate-700 bg-slate-800/50">
+                    <h3 className="font-bold text-white flex items-center gap-2"><FileJson size={18} className="text-blue-400"/> 计划航线数据预览 ({ship.name})</h3>
+                    <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors"><X size={20}/></button>
+                </div>
+                <div className="p-4 overflow-y-auto custom-scrollbar space-y-4">
+                    <div>
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-xs font-bold text-slate-400 uppercase">Standard GeoJSON</span>
+                            <button onClick={() => navigator.clipboard.writeText(JSON.stringify(geoJson, null, 2))} className="text-[10px] px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-blue-300 border border-slate-600 transition-colors">复制 JSON</button>
+                        </div>
+                        <pre className="bg-slate-950 p-3 rounded border border-slate-800 text-[10px] text-green-400 font-mono overflow-x-auto">
+                            {JSON.stringify(geoJson, null, 2)}
+                        </pre>
+                    </div>
+                    <div>
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-xs font-bold text-slate-400 uppercase">CSV Format (Lat, Lon)</span>
+                            <button onClick={() => navigator.clipboard.writeText(csvContent)} className="text-[10px] px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded text-blue-300 border border-slate-600 transition-colors">复制 CSV</button>
+                        </div>
+                        <pre className="bg-slate-950 p-3 rounded border border-slate-800 text-[10px] text-blue-300 font-mono overflow-x-auto whitespace-pre-wrap">
+                            {csvContent}
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+/**
+ * ------------------------------------------------------------------
+ * 4. 主组件
+ * ------------------------------------------------------------------
+ */
+export default function App() {
+  const mapContainerRef = useRef(null);
+  const mapInstanceRef = useRef(null);
+  const tileLayerRef = useRef(null);
+  const markersLayerRef = useRef(null);
+  const routeLayerRef = useRef(null);
+  const playbackLayerRef = useRef(null); // 回放图层
+  const importLayerRef = useRef(null); // 导入图层
+  const drawingLayerRef = useRef(null); // 绘图图层
+  const typhoonLayerRef = useRef(null);
+  const weatherLayerRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const scriptLoadedRef = useRef(false);
+
+  const [allItems, setAllItems] = useState([]);
+  const [weatherData, setWeatherData] = useState([]);
+  const [selectedCluster, setSelectedCluster] = useState(null);
+  const [highlightedItemId, setHighlightedItemId] = useState(null); 
+  const [libLoaded, setLibLoaded] = useState(false);
+  const [mapReady, setMapReady] = useState(false);
+  
+  const [showWeather, setShowWeather] = useState(false);
+  const [isOfflineMode, setIsOfflineMode] = useState(false);
+  
+  // 轨迹回放状态
+  const [playbackState, setPlaybackState] = useState({ id: null, index: 0, playing: false });
+  // 数据预览状态
+  const [previewDataId, setPreviewDataId] = useState(null);
+  // 绘图模式状态
+  const [isDrawingMode, setIsDrawingMode] = useState(false);
+  const [drawnRoutePoints, setDrawnRoutePoints] = useState([]);
+  
+  // 搜索状态
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+
+  const activeAlarms = useMemo(() => allItems.filter(i => i.isAlarm), [allItems]);
+  
+  const filteredItems = useMemo(() => {
+        if (!searchQuery) return [];
+        const lower = searchQuery.toLowerCase();
+        return allItems.filter(item => 
+            item.name.toLowerCase().includes(lower) || 
+            item.id.toLowerCase().includes(lower)
+        ).slice(0, 10);
+  }, [searchQuery, allItems]);
+
+  // 绘图逻辑：点击地图添加点
+  useEffect(() => {
+      if (!mapInstanceRef.current || !window.L) return;
+      const map = mapInstanceRef.current;
+
+      const handleMapClick = (e) => {
+          if (!isDrawingMode) return;
+          const { lat, lng } = e.latlng;
+          setDrawnRoutePoints(prev => [...prev, [lat, lng]]);
+      };
+
+      if (isDrawingMode) {
+          map.getContainer().style.cursor = 'crosshair'; // 改变光标样式
+          map.on('click', handleMapClick);
+      } else {
+          map.getContainer().style.cursor = '';
+          map.off('click', handleMapClick);
+      }
+
+      return () => {
+          map.off('click', handleMapClick);
+          if (map.getContainer()) map.getContainer().style.cursor = '';
+      };
+  }, [isDrawingMode, libLoaded]);
+
+  // 绘图逻辑：渲染图层
+  useEffect(() => {
+      if (!drawingLayerRef.current || !window.L) return;
+      const L = window.L;
+      const layer = drawingLayerRef.current;
+      layer.clearLayers();
+
+      if (drawnRoutePoints.length > 0) {
+          // 绘制路径线 (黄色虚线)
+          L.polyline(drawnRoutePoints, { color: '#fbbf24', weight: 3, dashArray: '10, 10', opacity: 0.8 }).addTo(layer);
+          
+          // 绘制航路点 (小圆点)
+          drawnRoutePoints.forEach((p, i) => {
+              L.circleMarker(p, { radius: 5, color: '#fbbf24', fillColor: '#000', fillOpacity: 1 })
+               .addTo(layer)
+               .bindTooltip(`WP ${i+1}`, { permanent: false, direction: 'top' });
+          });
+      }
+  }, [drawnRoutePoints, libLoaded]);
+
+  // 绘图功能控制
+  const handleStartDrawing = () => {
+      setIsDrawingMode(!isDrawingMode);
+      if (!isDrawingMode) {
+          // 开始绘图时清空上次未保存的，或者保留逻辑看需求，这里先不清空以便继续画，
+          // 如果需要清空可以调用 setDrawnRoutePoints([])
+      }
+  };
+
+  const handleClearDrawing = () => {
+      setDrawnRoutePoints([]);
+  };
+
+  const handleUndoDrawing = () => {
+      setDrawnRoutePoints(prev => prev.slice(0, -1));
+  };
+
+  const handleSaveDrawing = () => {
+      if (drawnRoutePoints.length < 2) {
+          alert("请至少绘制两个航路点");
+          return;
+      }
+      
+      const routeData = {
+          name: `Custom Route ${new Date().toLocaleString()}`,
+          points: drawnRoutePoints
+      };
+      
+      // 生成 GeoJSON 下载
+      const geoJson = {
+          type: "Feature",
+          properties: { name: routeData.name },
+          geometry: {
+              type: "LineString",
+              coordinates: drawnRoutePoints.map(p => [p[1], p[0]]) // [Lon, Lat]
+          }
+      };
+
+      const blob = new Blob([JSON.stringify(geoJson, null, 2)], {type: "application/json"});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `route_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      alert(`航线已保存 (${drawnRoutePoints.length} WPs)`);
+      setIsDrawingMode(false);
+      // 可选：保存后清空
+      // setDrawnRoutePoints([]); 
+  };
+
+  // 导入航线功能
+  const handleImportClick = () => {
+      fileInputRef.current?.click();
+  };
+
+  const drawImportedRoute = (points) => {
+      if (!mapInstanceRef.current || !importLayerRef.current || !window.L) return;
+      const L = window.L;
+      importLayerRef.current.clearLayers();
+      
+      // 绘制航线 (洋红色虚线，以示区别)
+      L.polyline(points, { color: '#d946ef', weight: 4, dashArray: '10, 5' }).addTo(importLayerRef.current); 
+      
+      // 绘制航路点
+      points.forEach((p, i) => {
+          L.circleMarker(p, { radius: 4, color: '#d946ef', fillColor: '#fff', fillOpacity: 1 })
+           .addTo(importLayerRef.current)
+           .bindPopup(`WP ${i+1}: ${p[0].toFixed(4)}, ${p[1].toFixed(4)}`);
+      });
+
+      // 缩放至航线
+      mapInstanceRef.current.fitBounds(L.polyline(points).getBounds(), { padding: [50, 50] });
+  };
+
+  const handleFileImport = (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+          const text = e.target.result;
+          try {
+              let routePoints = [];
+              
+              // 1. 尝试解析 JSON (GeoJSON or Custom Array)
+              if (text.trim().startsWith('{') || text.trim().startsWith('[')) {
+                  const json = JSON.parse(text);
+                  if (Array.isArray(json)) {
+                      // 假设是 [[lat, lon], ...] 或 [{lat, lon}, ...]
+                      routePoints = json.map(p => {
+                          if (Array.isArray(p)) return p;
+                          return [p.lat || p.latitude, p.lon || p.lng || p.longitude];
+                      });
+                  } else if (json.type === 'FeatureCollection' || json.type === 'Feature') {
+                      // GeoJSON 支持 (注意: GeoJSON 是 [Lon, Lat])
+                      // 这里简化处理，仅提取第一个 LineString
+                      const features = json.type === 'FeatureCollection' ? json.features : [json];
+                      const lineString = features.find(f => f.geometry.type === 'LineString');
+                      if (lineString) {
+                          // GeoJSON coords are [Lon, Lat], Leaflet needs [Lat, Lon]
+                          routePoints = lineString.geometry.coordinates.map(c => [c[1], c[0]]);
+                      }
+                  }
+              } else {
+                  // 2. 尝试解析 CSV / 简单文本 (符合行业习惯: Lat, Lon)
+                  // 格式支持: "lat,lon" 或 "wp,lat,lon" 等
+                  const lines = text.split('\n');
+                  lines.forEach(line => {
+                      // 移除引号等杂质
+                      const cleanLine = line.replace(/['"]/g, '').trim();
+                      if (!cleanLine) return;
+                      
+                      const parts = cleanLine.split(/[,\t;]/).map(s => s.trim());
+                      // 寻找行内有效的坐标对
+                      const coords = parts.filter(p => !isNaN(parseFloat(p)) && Math.abs(parseFloat(p)) <= 180);
+                      
+                      if (coords.length >= 2) {
+                          // 简单启发式：假设前两个数字是 Lat, Lon (行业惯例)
+                          // 严谨的行业数据通常会有表头，这里做宽容处理
+                          const v1 = parseFloat(coords[0]);
+                          const v2 = parseFloat(coords[1]);
+                          // 简单校验范围
+                          if (v1 >= -90 && v1 <= 90 && v2 >= -180 && v2 <= 180) {
+                              routePoints.push([v1, v2]);
+                          }
+                      }
+                  });
+              }
+
+              if (routePoints.length > 1) {
+                  drawImportedRoute(routePoints);
+                  // 稍微延迟提示，以免阻塞 UI 渲染
+                  setTimeout(() => alert(`成功导入航线，包含 ${routePoints.length} 个航路点。\n已自动缩放至航线区域。`), 100);
+              } else {
+                  alert("未识别到有效的航路点数据。\n\n支持格式:\n1. CSV: lat,lon\n2. GeoJSON\n3. JSON 数组");
+              }
+          } catch (err) {
+              console.error("Import failed", err);
+              alert("导入失败：文件格式解析错误");
+          }
+      };
+      reader.readAsText(file);
+      // 重置 value 允许重复导入同一文件
+      event.target.value = '';
+  };
+
+  // 回放控制逻辑
+  useEffect(() => {
+    let timer;
+    if (playbackState.playing && playbackState.id) {
+        timer = setInterval(() => {
+            setPlaybackState(prev => {
+                const ship = allItems.find(s => s.id === prev.id);
+                if (!ship || !ship.historyPath || prev.index >= ship.historyPath.length - 1) {
+                    return { ...prev, playing: false };
+                }
+                return { ...prev, index: prev.index + 1 };
+            });
+        }, 150); // 150ms 刷新一次位置
+    }
+    return () => clearInterval(timer);
+  }, [playbackState.playing, playbackState.id, allItems]);
+
+  // 回放图层绘制
+  useEffect(() => {
+    if (!mapInstanceRef.current || !playbackLayerRef.current || !libLoaded) return;
+    if (!window.L) return;
+    const L = window.L;
+    const layer = playbackLayerRef.current;
+    layer.clearLayers();
+
+    if (playbackState.id) {
+        const ship = allItems.find(s => s.id === playbackState.id);
+        if (ship && ship.historyPath && ship.historyPath.length > 0) {
+            // 绘制完整轨迹线 (灰色底)
+            L.polyline(ship.historyPath, { color: '#64748b', weight: 2, dashArray: '4, 4', opacity: 0.5 }).addTo(layer);
+            
+            // 绘制已走过的轨迹 (高亮)
+            const travelledPath = ship.historyPath.slice(0, playbackState.index + 1);
+            L.polyline(travelledPath, { color: '#0ea5e9', weight: 3, opacity: 1 }).addTo(layer);
+
+            // 绘制移动的船
+            const currentPos = ship.historyPath[playbackState.index];
+            if (currentPos) {
+                 const iconHtml = `<div class="relative w-8 h-8 flex items-center justify-center bg-blue-600 rounded-full border-2 border-white shadow-lg text-white"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="transform: rotate(${ship.course}deg)"><path d="M2 21c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1 .6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" /><path d="M19.38 20A11.6 11.6 0 0 0 21 14l-9-4-9 4c0 2.9.9 5.8 2.5 8" /><path d="M5 14L4 14" /><path d="M10 14L9 14" /><path d="M15 14L14 14" /></svg></div>`;
+                 L.marker(currentPos, {
+                     icon: L.divIcon({
+                         className: 'playback-marker',
+                         html: iconHtml,
+                         iconSize: [32, 32],
+                         iconAnchor: [16, 16]
+                     }),
+                     zIndexOffset: 1000
+                 }).addTo(layer);
+                 
+                 // 自动跟随视角
+                 if (playbackState.playing) {
+                     mapInstanceRef.current.panTo(currentPos, { animate: true, duration: 0.1 });
+                 }
+            }
+        }
+    }
+  }, [playbackState, allItems, libLoaded]);
+
+  // 加载 Leaflet 库
+  useEffect(() => {
+    if (scriptLoadedRef.current) return;
+    
+    // 检查 Leaflet 是否已经可用
+    const checkLeaflet = () => {
+        return window.L && typeof window.L.map === 'function';
+    };
+
+    if (checkLeaflet()) {
+        setLibLoaded(true);
+        return;
+    }
+
+    scriptLoadedRef.current = true;
+
+    const link = document.createElement('link'); 
+    link.rel = 'stylesheet'; 
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css'; 
+    document.head.appendChild(link);
+
+    const script = document.createElement('script'); 
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js'; 
+    script.async = true; 
+    
+    script.onload = () => {
+        // 轮询检查 L.map 是否就绪，因为 script load 和执行可能微小差异
+        const interval = setInterval(() => {
+            if (checkLeaflet()) {
+                setLibLoaded(true);
+                clearInterval(interval);
+            }
+        }, 50);
+        
+        // 超时保护
+        setTimeout(() => clearInterval(interval), 5000);
+    };
+    script.onerror = () => {
+        console.error("Failed to load Leaflet from CDN");
+    };
+    document.body.appendChild(script);
+  }, []);
+
+  // 加载初始数据
+  useEffect(() => { setAllItems(generateData()); setWeatherData(generateWeatherData()); }, []);
+
+  // 初始化地图
+  useEffect(() => {
+    if (!libLoaded || !mapContainerRef.current) return;
+    if (mapInstanceRef.current) return;
+
+    // 再次安全获取 Leaflet 对象
+    const L = window.L;
+    // 双重检查确保 L.map 是函数
+    if (!L || typeof L.map !== 'function') return;
+
+    // 防御性修复默认图标路径问题
+    try {
+        if (L.Icon && L.Icon.Default && L.Icon.Default.prototype && L.Icon.Default.prototype._getIconUrl) {
+            delete L.Icon.Default.prototype._getIconUrl;
+            L.Icon.Default.mergeOptions({ 
+                iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png', 
+                iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png', 
+                shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png' 
+            });
+        }
+    } catch (e) {
+        console.warn("Leaflet icon setup warning:", e);
+    }
+
+    try {
+        const map = L.map(mapContainerRef.current, { center: [35, 105], zoom: 4, zoomControl: false, attributionControl: false });
+        
+        // 瓦片层
+        const tileLayer = L.tileLayer(TILE_SOURCES.ONLINE.url, { attribution: TILE_SOURCES.ONLINE.attribution, maxZoom: 19 }).addTo(map);
+        tileLayerRef.current = tileLayer;
+
+        // 准格尔盆地
+        const junggarCoords = [
+            [48.2, 87.5], [47.8, 89.0], [47.0, 90.2], [46.0, 90.8], 
+            [45.0, 91.0], [44.2, 90.0], [43.8, 88.5], [43.5, 87.0], 
+            [43.8, 85.5], [44.5, 84.0], [45.5, 83.0], [46.5, 83.5], 
+            [47.2, 84.8], [47.8, 86.0]
+        ];
+        L.polygon(junggarCoords, { color: '#fbbf24', weight: 2, opacity: 0.8, dashArray: '5, 5', fillColor: '#fbbf24', fillOpacity: 0.15 }).addTo(map).bindPopup("准格尔盆地");
+
+        // 图层组
+        const weatherLayer = L.layerGroup().addTo(map);
+        const routeLayer = L.layerGroup().addTo(map);
+        const typhoonLayer = L.layerGroup().addTo(map);
+        const markersLayer = L.layerGroup().addTo(map); // 标记在最上层
+        const playbackLayer = L.layerGroup().addTo(map); // 回放图层
+        const importLayer = L.layerGroup().addTo(map); // 导入图层
+        const drawingLayer = L.layerGroup().addTo(map); // 绘图图层
+        
+        weatherLayerRef.current = weatherLayer;
+        routeLayerRef.current = routeLayer;
+        markersLayerRef.current = markersLayer;
+        typhoonLayerRef.current = typhoonLayer;
+        playbackLayerRef.current = playbackLayer;
+        importLayerRef.current = importLayer;
+        drawingLayerRef.current = drawingLayer;
+        mapInstanceRef.current = map;
+
+        map.on('moveend', () => setMapReady(prev => !prev));
+        setMapReady(true);
+
+        // 强制重绘一次以确保瓦片加载
+        setTimeout(() => {
+            map.invalidateSize();
+        }, 100);
+    } catch (err) {
+        console.error("Map initialization failed", err);
+    }
+
+    return () => { 
+        if (mapInstanceRef.current) {
+            mapInstanceRef.current.remove(); 
+            mapInstanceRef.current = null; 
+        }
+    };
+  }, [libLoaded]);
+
+  // 离线/在线瓦片切换
+  useEffect(() => {
+      if (!mapInstanceRef.current || !tileLayerRef.current || !libLoaded) return;
+      // 检查 L 是否存在
+      if (!window.L || typeof window.L.tileLayer !== 'function') return;
+
+      const L = window.L; const map = mapInstanceRef.current;
+      const source = isOfflineMode ? TILE_SOURCES.OFFLINE : TILE_SOURCES.ONLINE;
+      
+      if (tileLayerRef.current) {
+         map.removeLayer(tileLayerRef.current);
+      }
+      
+      const newTileLayer = L.tileLayer(source.url, { attribution: source.attribution, maxZoom: 19 }).addTo(map);
+      newTileLayer.bringToBack();
+      tileLayerRef.current = newTileLayer;
+  }, [isOfflineMode, libLoaded]);
+
+  // 绘制气象图层
+  useEffect(() => {
+    if (!mapInstanceRef.current || !weatherLayerRef.current || !libLoaded) return;
+    if (!window.L) return;
+
+    const L = window.L; const layer = weatherLayerRef.current; layer.clearLayers();
+    if (!showWeather) return;
+
+    weatherData.forEach(w => {
+        let color = '#a3e635'; if (w.windSpeed >= 15) color = '#facc15'; if (w.windSpeed >= 25) color = '#f87171';
+        let weatherIconSvg = w.type === 'Clear' ? `<circle cx="12" cy="12" r="6" fill="${color}" fill-opacity="0.2" stroke="${color}" stroke-width="2"/>` : `<path d="M17.5 19c0-1.7-1.3-3-3-3h-11c-1.7 0-3 1.3-3 3s1.3 3 3 3h11c1.7 0 3-1.3 3-3z" fill="${color}" fill-opacity="0.4"/>`;
+        const html = `<div class="relative w-10 h-10 flex items-center justify-center"><div style="transform: rotate(${w.windDir}deg); transform-origin: center;" class="absolute inset-0 flex items-center justify-center opacity-60"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg></div><div class="absolute bottom-0 right-0 bg-slate-900/80 text-[8px] px-1 rounded text-white font-mono">${w.windSpeed}</div><div class="absolute top-0 left-0 w-4 h-4"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${weatherIconSvg}</svg></div></div>`;
+        L.marker([w.lat, w.lon], { icon: L.divIcon({ html, className: 'weather-icon-marker', iconSize: [40, 40], iconAnchor: [20, 20] }), zIndexOffset: -100 }).addTo(layer);
+    });
+  }, [libLoaded, weatherData, showWeather]);
+
+  // 绘制台风图层
+  useEffect(() => {
+    if (!mapInstanceRef.current || !typhoonLayerRef.current || !libLoaded) return;
+    if (!window.L) return;
+
+    const L = window.L; const layer = typhoonLayerRef.current; layer.clearLayers();
+    const t = TYPHOON_DATA; const currentPos = t.path[t.currentIdx];
+
+    const windLevels = [
+        { level: 7, radii: t.windRadii[7], color: '#22c55e', fillColor: '#22c55e', fillOpacity: 0.15 },
+        { level: 10, radii: t.windRadii[10], color: '#eab308', fillColor: '#eab308', fillOpacity: 0.25 },
+        { level: 12, radii: t.windRadii[12], color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.35 }
+    ];
+    windLevels.forEach(w => L.polygon(generateWindCirclePoints(currentPos, w.radii), { color: w.color, weight: 1.5, fillColor: w.fillColor, fillOpacity: w.fillOpacity }).addTo(layer));
+    
+    L.polyline(t.path.slice(0, t.currentIdx + 1), { color: '#f87171', weight: 2, opacity: 0.8 }).addTo(layer);
+    L.polyline(t.path.slice(t.currentIdx), { color: '#fbbf24', weight: 2, dashArray: '5, 8', opacity: 0.7 }).addTo(layer);
+    
+    const icon = L.divIcon({ html: `<div class="relative w-full h-full flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="animate-[spin_2s_linear_infinite] drop-shadow-[0_0_8px_rgba(220,38,38,0.6)]"><path d="M17.7 7.7a2.5 2.5 0 1 1 1.8 4.3H2" /><path d="M9.6 4.6A2 2 0 1 1 11 8H2" /><path d="M12.6 19.4A2 2 0 1 0 14 16H2" /></svg></div>`, className: 'typhoon-icon-container', iconSize: [40, 40], iconAnchor: [20, 20] });
+    L.marker(currentPos, { icon }).addTo(layer).bindPopup(`台风 ${t.name}`);
+  }, [libLoaded, mapReady]);
+
+  // 绘制选中航线
+  useEffect(() => {
+      if (!mapInstanceRef.current || !routeLayerRef.current || !libLoaded) return;
+      if (!window.L) return;
+
+      const L = window.L; const layer = routeLayerRef.current; layer.clearLayers();
+      if (!highlightedItemId) return;
+      const item = allItems.find(i => i.id === highlightedItemId);
+      if (item && item.type === 'ship' && item.plannedRoute) {
+          L.polyline(item.plannedRoute, { color: '#3b82f6', weight: 2, dashArray: '5, 10', opacity: 0.8 }).addTo(layer);
+          if (item.isAlarm) {
+              const currentPos = [item.lat, item.lon];
+              const nearestRoutePoint = item.plannedRoute[0]; 
+              L.polyline([currentPos, nearestRoutePoint], { color: '#ef4444', weight: 2, opacity: 0.8 }).addTo(layer);
+              const midLat = (currentPos[0] + nearestRoutePoint[0])/2;
+              const midLon = (currentPos[1] + nearestRoutePoint[1])/2;
+              L.marker([midLat, midLon], { icon: L.divIcon({ className: 'text-label', html: `<div class="bg-red-600 text-white text-[10px] px-1 rounded shadow whitespace-nowrap">偏离 ${item.xte.toFixed(1)} NM</div>`, iconSize: [80, 20] }) }).addTo(layer);
+          }
+      }
+  }, [highlightedItemId, allItems, libLoaded]);
+
+  // 绘制 Markers
+  useEffect(() => {
+    if (!mapInstanceRef.current || !markersLayerRef.current || allItems.length === 0 || !libLoaded) return;
+    if (!window.L) return;
+
+    const L = window.L; const layerGroup = markersLayerRef.current; layerGroup.clearLayers();
+    
+    // 简单聚合逻辑
+    const clusters = []; const processedIds = new Set(); const map = mapInstanceRef.current;
+    
+    try {
+        const points = allItems.map(item => {
+            const point = map.latLngToLayerPoint([item.lat, item.lon]);
+            return { ...item, x: point.x, y: point.y };
+        });
+        
+        for (let i = 0; i < points.length; i++) {
+          if (processedIds.has(points[i].id)) continue;
+          const base = points[i]; const cluster = [base]; processedIds.add(base.id);
+          for (let j = i + 1; j < points.length; j++) {
+            if (processedIds.has(points[j].id)) continue;
+            if (Math.sqrt(Math.pow(base.x - points[j].x, 2) + Math.pow(base.y - points[j].y, 2)) < 50) { cluster.push(points[j]); processedIds.add(points[j].id); }
+          }
+          clusters.push(cluster);
+        }
+
+        clusters.forEach(clusterItems => {
+          const isCluster = clusterItems.length > 1;
+          const mainItem = clusterItems[0];
+          const position = [mainItem.lat, mainItem.lon];
+          const isHighlighted = !isCluster && mainItem.id === highlightedItemId;
+          const hasAlarmInCluster = clusterItems.some(i => i.isAlarm);
+          // 如果处于回放状态，隐藏原图标
+          if (playbackState.id === mainItem.id && playbackState.playing) {
+              return; 
+          }
+
+          let html = '';
+          let zIndexOffset = 0;
+
+          if (isCluster) {
+            const colorClass = hasAlarmInCluster ? 'bg-red-600 border-red-400 alarm-pulse' : (clusterItems.some(i=>i.type==='rig') ? 'bg-orange-600 border-orange-400' : 'bg-blue-600 border-blue-400');
+            html = `<div class="flex items-center justify-center w-full h-full rounded-full border-2 text-white font-bold shadow-lg ${colorClass} bg-opacity-90 backdrop-blur-sm">${clusterItems.length}</div>`;
+          } else {
+            const item = mainItem;
+            const rotation = item.course ? `transform: rotate(${item.course}deg)` : '';
+            const bgClass = item.isAlarm ? 'bg-red-600' : (item.type === 'rig' ? 'bg-orange-500' : 'bg-blue-500');
+            const shape = item.type === 'rig' 
+                ? `<div class="w-full h-full flex items-center justify-center ${bgClass} rounded text-white shadow-md border border-white"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"></path></svg></div>`
+                : `<div class="w-full h-full flex items-center justify-center ${bgClass} rounded-full text-white shadow-md border border-white" style="${rotation}"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="0"><polygon points="12 2 22 22 12 18 2 22"></polygon></svg></div>`;
+
+            if (item.isAlarm) {
+                html = `<div class="relative w-full h-full">
+                          <div class="absolute inset-[-8px] bg-red-500 rounded-full animate-ping opacity-75"></div>
+                          <div class="absolute inset-[-4px] bg-red-500 rounded-full opacity-40"></div>
+                          <div class="relative w-full h-full">${shape}</div>
+                        </div>`;
+                zIndexOffset = 2000;
+            } else if (isHighlighted) {
+                html = `<div class="relative w-full h-full">
+                          <div class="absolute inset-[-8px] bg-yellow-400 rounded-full animate-ping opacity-75"></div>
+                          <div class="absolute inset-[-4px] bg-yellow-400 rounded-full opacity-40"></div>
+                          <div class="relative w-full h-full">${shape}</div>
+                        </div>`;
+                zIndexOffset = 1000;
+            } else {
+                html = shape;
+            }
+          }
+
+          const icon = L.divIcon({ html, className: 'custom-marker', iconSize: [24, 24], iconAnchor: [12, 12] });
+          const marker = L.marker(position, { icon, zIndexOffset }).addTo(layerGroup);
+          marker.on('click', () => {
+              if (!isCluster) setHighlightedItemId(mainItem.id);
+              setSelectedCluster({ id: isCluster ? `cluster-${mainItem.id}` : mainItem.id, isCluster, items: clusterItems });
+          });
+        });
+    } catch (e) {
+        console.warn("Projection error usually due to map init", e);
+    }
+  }, [allItems, mapReady, libLoaded, highlightedItemId, playbackState]); // 添加 playbackState 依赖
+
+  const handleLocateItem = (item) => {
+    setHighlightedItemId(item.id);
+    if (mapInstanceRef.current) mapInstanceRef.current.setView([item.lat, item.lon], 12, { animate: true });
+  };
+  
+  const startPlayback = (id) => {
+      setPlaybackState({ id, index: 0, playing: true });
+  };
+  
+  const stopPlayback = () => {
+      setPlaybackState({ id: null, index: 0, playing: false });
+  };
+  
+  const togglePlayPause = () => {
+      setPlaybackState(prev => ({ ...prev, playing: !prev.playing }));
+  };
+
+  return (
+    <div className="flex flex-col h-screen w-full bg-slate-900 text-white font-sans overflow-hidden">
+      <style>{`
+        .custom-marker, .typhoon-icon-container, .text-label, .weather-icon-marker, .playback-marker { background: transparent; border: none; }
+        .leaflet-control-attribution { background: rgba(0,0,0,0.5) !important; color: #aaa !important; }
+        @keyframes alarm-pulse { 0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); } 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); } }
+        .alarm-pulse { animation: alarm-pulse 2s infinite; }
+        /* 自定义滚动条 */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+      `}</style>
+
+      {/* 隐藏的文件输入框 */}
+      <input 
+          type="file" 
+          ref={fileInputRef} 
+          style={{ display: 'none' }} 
+          accept=".csv,.json,.txt,.geojson" 
+          onChange={handleFileImport} 
+      />
+
+      {/* 顶部导航 */}
+      <div className="h-14 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-4 z-20 shadow-lg shrink-0">
+        <div className="flex items-center gap-2">
+          <MapIcon className="text-blue-400" />
+          <div><h1 className="font-bold text-lg tracking-wide">OceanEye 监控系统</h1><p className="text-[10px] text-slate-400 -mt-1">OSM | 台风 | 智能航线报警</p></div>
+        </div>
+
+        {/* 搜索框 */}
+        <div className="relative mx-4 flex-1 max-w-xs">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <Search size={14} className="text-slate-400" />
+            </div>
+            <input
+                type="text"
+                className="block w-full pl-9 pr-3 py-1.5 border border-slate-600 rounded bg-slate-700/50 text-slate-200 placeholder-slate-400 focus:outline-none focus:bg-slate-700 focus:border-blue-500 text-xs transition-colors"
+                placeholder="搜索船舶..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setTimeout(() => setIsSearchFocused(false), 200)}
+            />
+            {isSearchFocused && filteredItems.length > 0 && (
+                <div className="absolute top-full mt-1 left-0 w-full bg-slate-800 border border-slate-700 rounded shadow-xl max-h-60 overflow-y-auto custom-scrollbar z-50">
+                    {filteredItems.map(item => (
+                        <div 
+                            key={item.id} 
+                            className="px-3 py-2 hover:bg-slate-700 cursor-pointer flex justify-between items-center text-xs border-b border-slate-700/50 last:border-0"
+                            onClick={() => {
+                                handleLocateItem(item);
+                                setSearchQuery("");
+                            }}
+                        >
+                            <div className="flex items-center gap-2">
+                                {item.type === 'ship' ? <Ship size={12} className="text-blue-400"/> : <Droplet size={12} className="text-orange-400"/>}
+                                <span className="text-slate-200 font-medium">{item.name}</span>
+                            </div>
+                            <span className="text-slate-500 font-mono text-[10px]">{item.id}</span>
+                        </div>
+                    ))}
+                </div>
+            )}
+        </div>
+
+        <div className="flex items-center gap-3">
+             <div className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded border transition-colors ${activeAlarms.length > 0 ? 'bg-red-600/20 border-red-500 text-red-200 animate-pulse font-bold' : 'bg-slate-800 border-slate-600 text-slate-400'}`}>
+                 <Bell size={14} /> {activeAlarms.length > 0 ? `${activeAlarms.length} 艘严重偏航` : '系统正常'}
+             </div>
+             <div className="h-6 w-px bg-slate-600 mx-1"></div>
+             <button onClick={() => setIsOfflineMode(!isOfflineMode)} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-slate-600 bg-slate-700 text-slate-300">{isOfflineMode ? <WifiOff size={14} /> : <Wifi size={14} />} {isOfflineMode ? '离线' : '在线'}</button>
+             <button onClick={handleStartDrawing} className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded border transition-colors ${isDrawingMode ? 'bg-yellow-600/20 border-yellow-500 text-yellow-200 font-bold animate-pulse' : 'border-slate-600 bg-slate-700 text-slate-300'}`}><PenTool size={14} /> 绘制航线</button>
+             <button onClick={handleImportClick} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded border border-slate-600 bg-purple-900/30 text-purple-200 hover:bg-purple-900/50 border-purple-500/30"><FileUp size={14} /> 导入航线</button>
+             <button onClick={() => setShowWeather(!showWeather)} className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded border transition-colors ${showWeather?'bg-sky-600 border-sky-400 text-white':'bg-slate-700 border-slate-600 text-slate-300'}`}>{showWeather ? <CloudLightning size={14} /> : <Cloud size={14} />} 气象</button>
+             <button onClick={() => mapInstanceRef.current?.setView(TYPHOON_DATA.path[TYPHOON_DATA.currentIdx], 6)} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-red-600/20 border border-red-500 text-red-200 hover:bg-red-600/40"><Wind size={14} /> 台风</button>
+             <button onClick={() => mapInstanceRef.current?.setView([45.5, 87.0], 6)} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-amber-600/30 border border-amber-600 text-amber-200 hover:bg-amber-600/50"><Mountain size={14} /> 盆地</button>
+             <button onClick={() => { setAllItems(generateData()); setWeatherData(generateWeatherData()); }} className="p-2 rounded hover:bg-slate-700 text-slate-300"><Anchor size={18} /></button>
+             <button onClick={() => mapInstanceRef.current?.setView([35, 105], 4)} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500"><Target size={14} /> 居中</button>
+        </div>
+      </div>
+
+      {/* 地图与侧边栏 */}
+      <div className="flex-1 relative w-full h-full bg-slate-900">
+        <div id="map" ref={mapContainerRef} className="w-full h-full z-0" />
+        
+        {!libLoaded && <div className="absolute inset-0 flex items-center justify-center bg-slate-900 z-50 text-slate-400"><Loader2 className="animate-spin" size={32}/><span>加载中...</span></div>}
+
+        {/* 绘图模式工具栏 */}
+        {isDrawingMode && (
+            <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-yellow-500/50 p-3 rounded-lg flex items-center gap-3 z-[2000] backdrop-blur-md shadow-2xl animate-in slide-in-from-top duration-300">
+                <span className="text-xs font-bold text-yellow-400 flex items-center gap-2 mr-2"><PenTool size={16}/> 绘图模式: 点击地图添加点</span>
+                <div className="h-6 w-px bg-slate-700 mx-1"></div>
+                <button onClick={handleUndoDrawing} className="p-1.5 rounded hover:bg-slate-700 text-slate-300" title="撤销上一点"><CornerUpLeft size={18}/></button>
+                <button onClick={handleClearDrawing} className="p-1.5 rounded hover:bg-slate-700 text-red-400" title="清空"><Trash2 size={18}/></button>
+                <div className="h-6 w-px bg-slate-700 mx-1"></div>
+                <button onClick={handleSaveDrawing} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-blue-600 hover:bg-blue-500 text-white font-bold"><Save size={14}/> 保存航线</button>
+                <button onClick={handleStartDrawing} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-slate-700 hover:bg-slate-600 text-slate-300">退出</button>
+            </div>
+        )}
+
+        {/* 数据预览模态框 */}
+        {previewDataId && (
+            <RouteDataPreview 
+                ship={allItems.find(i => i.id === previewDataId)} 
+                onClose={() => setPreviewDataId(null)} 
+            />
+        )}
+
+        {/* 历史回放控制条 */}
+        {playbackState.id && (
+             <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-slate-900/90 border border-slate-700 p-4 rounded-xl flex items-center gap-4 z-[2000] backdrop-blur-md shadow-2xl animate-in slide-in-from-bottom duration-300">
+                 <div className="flex items-center gap-2">
+                     <button onClick={togglePlayPause} className="p-2 rounded-full bg-blue-600 hover:bg-blue-500 transition-colors">
+                         {playbackState.playing ? <Pause size={20} fill="white" /> : <Play size={20} fill="white" />}
+                     </button>
+                     <button onClick={stopPlayback} className="p-2 rounded-full bg-slate-700 hover:bg-slate-600 transition-colors text-red-400">
+                         <StopCircle size={20} />
+                     </button>
+                 </div>
+                 <div className="flex flex-col gap-1 w-64">
+                     <div className="flex justify-between text-xs text-slate-400">
+                         <span>回放进度</span>
+                         <span className="font-mono">{(playbackState.index / 50 * 100).toFixed(0)}%</span>
+                     </div>
+                     <div className="h-1.5 bg-slate-700 rounded-full overflow-hidden">
+                         <div className="h-full bg-blue-500 transition-all duration-300 ease-linear" style={{ width: `${(playbackState.index / 50 * 100)}%` }}></div>
+                     </div>
+                 </div>
+             </div>
+        )}
+
+        {selectedCluster && selectedCluster.items && (
+          <div className="absolute top-4 right-4 bottom-4 w-96 bg-slate-900/95 border border-slate-700 shadow-2xl backdrop-blur-md z-[1000] flex flex-col rounded-lg animate-in slide-in-from-right duration-300">
+            <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/80 rounded-t-lg">
+              <h3 className="font-bold text-white flex items-center gap-2">{selectedCluster.isCluster ? <Layers size={16}/> : <Navigation size={16}/>} {selectedCluster.isCluster ? `区域目标 (${selectedCluster.items.length})` : '目标详情'}</h3>
+              <button onClick={() => setSelectedCluster(null)} className="text-slate-400 hover:text-white"><X size={18} /></button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-2 space-y-2 custom-scrollbar">
+              {selectedCluster.items.map((item) => {
+                if (!item) return null;
+                const isExpanded = highlightedItemId === item.id;
+                return (
+                    <div key={item.id} onClick={() => handleLocateItem(item)} className={`rounded border transition-all cursor-pointer overflow-hidden ${isExpanded ? 'bg-slate-800 border-yellow-500/50 shadow-lg ring-1 ring-yellow-500/20' : 'bg-slate-800/40 border-slate-700 hover:border-slate-600'}`}>
+                       <div className="p-3 flex justify-between items-start">
+                           <div className="flex items-start gap-3">
+                               <div className={`mt-0.5 p-1.5 rounded-full ${item.isAlarm ? 'bg-red-600 animate-pulse text-white' : (item.type==='rig'?'bg-orange-500/20 text-orange-400':'bg-blue-500/20 text-blue-400')}`}>
+                                   {item.isAlarm ? <AlertOctagon size={16}/> : (item.type==='rig'?<Droplet size={16}/>:<Ship size={16}/>)}
+                               </div>
+                               <div>
+                                   <div className={`font-bold text-sm ${isExpanded ? 'text-yellow-400' : 'text-slate-200'}`}>{item.name}</div>
+                                   <div className="text-[10px] text-slate-500 font-mono mt-0.5">{item.id}</div>
+                                   {item.isAlarm && <div className="mt-1 flex items-center gap-1 text-[10px] text-red-400 font-bold"><AlertTriangle size={10} /> 偏离 {item.xte ? item.xte.toFixed(1) : '0.0'} NM</div>}
+                                   {!isExpanded && !item.isAlarm && <div className="flex gap-3 mt-2 text-[10px] text-slate-400"><span>{item.lat.toFixed(2)}N, {item.lon.toFixed(2)}E</span>{item.type==='ship'?<span>{item.speed} kn</span>:<span className={item.status==='正常'?'text-green-400':'text-yellow-400'}>{item.status}</span>}</div>}
+                               </div>
+                           </div>
+                           <div className="text-slate-500">{isExpanded ? <ChevronUp size={16} /> : <ChevronRight size={16} />}</div>
+                       </div>
+                       {isExpanded && (
+                           <div className="px-3 pb-3 pt-0 border-t border-slate-700/50 bg-slate-900/30">
+                               <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs text-slate-400 mt-3">
+                                  <div className="col-span-2 flex justify-between py-1 border-b border-slate-700/50"><span>坐标</span><span className="text-slate-300 font-mono">{item.lat.toFixed(4)}N, {item.lon.toFixed(4)}E</span></div>
+                                  {item.type === 'ship' ? (
+                                      <>
+                                          <div className="col-span-2 bg-slate-800/80 p-2 rounded border border-slate-700 mb-2">
+                                              <div className="flex items-center gap-2 font-bold text-slate-300 mb-1"><RouteIcon size={12}/> 航线监控</div>
+                                              <div className="flex justify-between items-center"><span>状态:</span>{item.isAlarm ? <span className="text-red-400 bg-red-900/30 px-1.5 py-0.5 rounded flex items-center gap-1"><AlertTriangle size={10}/> 严重偏航 ({item.xte ? item.xte.toFixed(1) : '0.0'} NM)</span> : <span className="text-green-400 bg-green-900/30 px-1.5 py-0.5 rounded">正常</span>}</div>
+                                          </div>
+                                          <div className="flex items-center gap-2"><Wind size={12}/> <span className="text-slate-300">{item.speed} kn</span></div>
+                                          <div className="flex items-center gap-2"><Navigation size={12}/> <span className="text-slate-300">{item.course}°</span></div>
+                                          <div className="col-span-2 flex items-center gap-2"><Target size={12}/> 目的: <span className="text-slate-300">{item.destination}</span></div>
+                                          <div className="col-span-2 mt-2 space-y-2">
+                                               <button onClick={(e) => { e.stopPropagation(); startPlayback(item.id); }} className="w-full py-2 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-bold flex items-center justify-center gap-2 transition-colors">
+                                                   <History size={14} /> 历史航迹回放
+                                               </button>
+                                               <button onClick={(e) => { e.stopPropagation(); setPreviewDataId(item.id); }} className="w-full py-2 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded text-xs font-bold flex items-center justify-center gap-2 transition-colors border border-slate-600">
+                                                   <FileJson size={14} /> 查看航线数据
+                                               </button>
+                                               <CrewList crew={item.crewList} />
+                                          </div>
+                                      </>
+                                  ) : (
+                                      <>
+                                         <div className="col-span-2 flex justify-between items-center"><span className="flex items-center gap-2"><Activity size={12}/> 状态</span><span className={`px-2 py-0.5 rounded text-[10px] font-bold ${item.status==='正常'?'bg-green-500/20 text-green-400':'bg-yellow-500/20 text-yellow-400'}`}>{item.status}</span></div>
+                                         <div className="col-span-2 flex items-center gap-2"><Briefcase size={12}/> <span className="text-slate-300">{item.operator}</span></div>
+                                         <div className="flex items-center gap-2"><Droplet size={12}/> 日产: <span className="text-slate-300">{item.dailyOutput}</span></div>
+                                         <div className="col-span-2 mt-1"><ProductionChart data={item.productionHistory} /></div>
+                                      </>
+                                  )}
+                               </div>
+                           </div>
+                       )}
+                    </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
