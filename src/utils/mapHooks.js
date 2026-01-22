@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { TILE_SOURCES, generateWindCirclePoints } from './mapUtils';
-import { TYPHOON_DATA } from './dataGenerator';
+import { TYPHOON_DATA, TYPHOON_INTENSITY } from './dataGenerator';
 
 export const useMapInitialization = (
   libLoaded,
@@ -192,26 +192,190 @@ export const useTyphoonLayer = (mapInstanceRef, typhoonLayerRef, mapReady, libLo
       layer.push(polygon);
     });
     
-    // 绘制已走路径
-    const passedPath = t.path.slice(0, t.currentIdx + 1).map(p => new T.LngLat(p[1], p[0]));
-    const passedLine = new T.Polyline(passedPath, { 
-      color: '#f87171', 
-      weight: 2, 
-      opacity: 0.8 
-    });
-    map.addOverLay(passedLine);
-    layer.push(passedLine);
+    // 绘制已走路径（按强度分段绘制不同颜色）
+    for (let i = 0; i < t.currentIdx; i++) {
+      const p1 = t.path[i];
+      const p2 = t.path[i + 1];
+      const intensity1 = TYPHOON_INTENSITY[p1[2]] || TYPHOON_INTENSITY.TY;
+      const intensity2 = TYPHOON_INTENSITY[p2[2]] || TYPHOON_INTENSITY.TY;
+      const segmentPath = [new T.LngLat(p1[1], p1[0]), new T.LngLat(p2[1], p2[0])];
+      const segmentLine = new T.Polyline(segmentPath, { 
+        color: intensity2.color, 
+        weight: 3, 
+        opacity: 0.9
+      });
+      map.addOverLay(segmentLine);
+      layer.push(segmentLine);
+      
+      // 在每个路径点上绘制实心圆点（使用该点的强度颜色）
+      const pointCircle = new T.Circle(new T.LngLat(p1[1], p1[0]), 15000, {
+        color: intensity1.color,
+        fillColor: intensity1.color,
+        fillOpacity: 1,
+        weight: 2
+      });
+      
+      // 为圆点添加点击事件
+      pointCircle.addEventListener('click', () => {
+        const intensityLevel = TYPHOON_INTENSITY[p1[2]]?.level || '未知';
+        const infoWindow = new T.InfoWindow();
+        const content = `
+          <div style="padding: 15px; min-width: 280px; font-family: Arial, sans-serif;">
+            <div style="background: #3b82f6; color: white; padding: 10px; margin: -15px -15px 10px -15px; font-size: 16px; font-weight: bold;">
+              【天琴】${p1[3] || '时间未知'}
+            </div>
+            <div style="margin: 8px 0; font-size: 14px;">
+              <strong style="color: #3b82f6;">中心位置：</strong>东经${p1[1].toFixed(1)}° 北纬${p1[0].toFixed(1)}°
+            </div>
+            <div style="margin: 8px 0; font-size: 14px;">
+              <strong style="color: #3b82f6;">风速风力：</strong>${p1[4] || '未知'},${intensityLevel}（${intensity1.name}）
+            </div>
+            <div style="margin: 8px 0; font-size: 14px;">
+              <strong style="color: #3b82f6;">中心气压：</strong>${p1[5] || '未知'}
+            </div>
+          </div>
+        `;
+        infoWindow.setLngLat(new T.LngLat(p1[1], p1[0]));
+        infoWindow.setContent(content);
+        map.addOverLay(infoWindow);
+      });
+      
+      map.addOverLay(pointCircle);
+      layer.push(pointCircle);
+    }
     
-    // 绘制预测路径
-    const futurePath = t.path.slice(t.currentIdx).map(p => new T.LngLat(p[1], p[0]));
-    const futureLine = new T.Polyline(futurePath, { 
-      color: '#fbbf24', 
-      weight: 2, 
-      opacity: 0.7,
-      style: 'dashed'
+    // 绘制当前位置的圆点（稍大一些）
+    const currentPoint = t.path[t.currentIdx];
+    const currentIntensityForPoint = TYPHOON_INTENSITY[currentPoint[2]] || TYPHOON_INTENSITY.TY;
+    const currentCircle = new T.Circle(new T.LngLat(currentPoint[1], currentPoint[0]), 15000, {
+      color: currentIntensityForPoint.color,
+      fillColor: currentIntensityForPoint.color,
+      fillOpacity: 1,
+      weight: 2
     });
-    map.addOverLay(futureLine);
-    layer.push(futureLine);
+    
+    // 为当前位置圆点添加点击事件
+    currentCircle.addEventListener('click', () => {
+      const intensityLevel = TYPHOON_INTENSITY[currentPoint[2]]?.level || '未知';
+      const infoWindow = new T.InfoWindow();
+      const content = `
+        <div style="padding: 15px; min-width: 280px; font-family: Arial, sans-serif;">
+          <div style="background: #3b82f6; color: white; padding: 10px; margin: -15px -15px 10px -15px; font-size: 16px; font-weight: bold;">
+            【天琴】${currentPoint[3] || '时间未知'}
+          </div>
+          <div style="margin: 8px 0; font-size: 14px;">
+            <strong style="color: #3b82f6;">中心位置：</strong>东经${currentPoint[1].toFixed(1)}° 北纬${currentPoint[0].toFixed(1)}°
+          </div>
+          <div style="margin: 8px 0; font-size: 14px;">
+            <strong style="color: #3b82f6;">风速风力：</strong>${currentPoint[4] || '未知'},${intensityLevel}（${currentIntensityForPoint.name}）
+          </div>
+          <div style="margin: 8px 0; font-size: 14px;">
+            <strong style="color: #3b82f6;">中心气压：</strong>${currentPoint[5] || '未知'}
+          </div>
+        </div>
+      `;
+      infoWindow.setLngLat(new T.LngLat(currentPoint[1], currentPoint[0]));
+      infoWindow.setContent(content);
+      map.addOverLay(infoWindow);
+    });
+    
+    map.addOverLay(currentCircle);
+    layer.push(currentCircle);
+    
+    // 绘制预测路径（虚线，按强度分段）
+    for (let i = t.currentIdx; i < t.path.length - 1; i++) {
+      const p1 = t.path[i];
+      const p2 = t.path[i + 1];
+      const intensity1 = TYPHOON_INTENSITY[p1[2]] || TYPHOON_INTENSITY.TY;
+      const intensity2 = TYPHOON_INTENSITY[p2[2]] || TYPHOON_INTENSITY.TY;
+      const segmentPath = [new T.LngLat(p1[1], p1[0]), new T.LngLat(p2[1], p2[0])];
+      const segmentLine = new T.Polyline(segmentPath, { 
+        color: intensity2.color, 
+        weight: 3, 
+        opacity: 0.7,
+        lineStyle: 'dashed'
+      });
+      map.addOverLay(segmentLine);
+      layer.push(segmentLine);
+      
+      // 在预测路径点上绘制空心圆点
+      if (i > t.currentIdx) {
+        const pointCircle = new T.Circle(new T.LngLat(p1[1], p1[0]), 15000, {
+          color: intensity1.color,
+          fillColor: '#ffffff',
+          fillOpacity: 0.5,
+          weight: 3
+        });
+        
+        // 为预测点添加点击事件
+        pointCircle.addEventListener('click', () => {
+          const intensityLevel = TYPHOON_INTENSITY[p1[2]]?.level || '未知';
+          const infoWindow = new T.InfoWindow();
+          const content = `
+            <div style="padding: 15px; min-width: 280px; font-family: Arial, sans-serif;">
+              <div style="background: #3b82f6; color: white; padding: 10px; margin: -15px -15px 10px -15px; font-size: 16px; font-weight: bold;">
+                【天琴】${p1[3] || '时间未知'} (预测)
+              </div>
+              <div style="margin: 8px 0; font-size: 14px;">
+                <strong style="color: #3b82f6;">中心位置：</strong>东经${p1[1].toFixed(1)}° 北纬${p1[0].toFixed(1)}°
+              </div>
+              <div style="margin: 8px 0; font-size: 14px;">
+                <strong style="color: #3b82f6;">风速风力：</strong>${p1[4] || '未知'},${intensityLevel}（${intensity1.name}）
+              </div>
+              <div style="margin: 8px 0; font-size: 14px;">
+                <strong style="color: #3b82f6;">中心气压：</strong>${p1[5] || '未知'}
+              </div>
+            </div>
+          `;
+          infoWindow.setLngLat(new T.LngLat(p1[1], p1[0]));
+          infoWindow.setContent(content);
+          map.addOverLay(infoWindow);
+        });
+        
+        map.addOverLay(pointCircle);
+        layer.push(pointCircle);
+      }
+    }
+    
+    // 绘制最后一个预测点
+    if (t.path.length > t.currentIdx + 1) {
+      const lastPoint = t.path[t.path.length - 1];
+      const lastIntensity = TYPHOON_INTENSITY[lastPoint[2]] || TYPHOON_INTENSITY.TY;
+      const lastCircle = new T.Circle(new T.LngLat(lastPoint[1], lastPoint[0]), 15000, {
+        color: lastIntensity.color,
+        fillColor: '#ffffff',
+        fillOpacity: 0.5,
+        weight: 3
+      });
+      
+      // 为最后一个预测点添加点击事件
+      lastCircle.addEventListener('click', () => {
+        const intensityLevel = TYPHOON_INTENSITY[lastPoint[2]]?.level || '未知';
+        const infoWindow = new T.InfoWindow();
+        const content = `
+          <div style="padding: 15px; min-width: 280px; font-family: Arial, sans-serif;">
+            <div style="background: #3b82f6; color: white; padding: 10px; margin: -15px -15px 10px -15px; font-size: 16px; font-weight: bold;">
+              【天琴】${lastPoint[3] || '时间未知'} (预测)
+            </div>
+            <div style="margin: 8px 0; font-size: 14px;">
+              <strong style="color: #3b82f6;">中心位置：</strong>东经${lastPoint[1].toFixed(1)}° 北纬${lastPoint[0].toFixed(1)}°
+            </div>
+            <div style="margin: 8px 0; font-size: 14px;">
+              <strong style="color: #3b82f6;">风速风力：</strong>${lastPoint[4] || '未知'},${intensityLevel}（${lastIntensity.name}）
+            </div>
+            <div style="margin: 8px 0; font-size: 14px;">
+              <strong style="color: #3b82f6;">中心气压：</strong>${lastPoint[5] || '未知'}
+            </div>
+          </div>
+        `;
+        infoWindow.setLngLat(new T.LngLat(lastPoint[1], lastPoint[0]));
+        infoWindow.setContent(content);
+        map.addOverLay(infoWindow);
+      });
+      
+      map.addOverLay(lastCircle);
+      layer.push(lastCircle);
+    }
     
     // 绘制24小时警戒线（红色实线）
     if (t.warningLines && t.warningLines.h24) {
@@ -276,21 +440,13 @@ export const useTyphoonLayer = (mapInstanceRef, typhoonLayerRef, mapReady, libLo
       layer.push(h48Label);
     }
     
-    // 台风图标（SVG+文本）
-    const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='60' height='80' viewBox='0 0 60 80' style='pointer-events: none;'>
-      <g>
-        <text x='30' y='18' text-anchor='middle' font-size='14' fill='#e16531' font-weight='bold'>台风 ${t.name}</text>
-        <g transform='translate(10,25) scale(0.04)'>
-          <path d="M608 42.666667c53.312 0 104.533333 8.896 152.298667 25.258666a466.538667 466.538667 0 0 0-196.608 73.045334l-0.661334 0.426666C798.229333 166.826667 981.333333 366.037333 981.333333 608c0 53.312-8.896 104.533333-25.28 152.298667a466.56 466.56 0 0 0-73.514666-197.333334C857.173333 798.229333 657.962667 981.376 416 981.376c-53.312 0-104.533333-8.896-152.298667-25.28a466.538667 466.538667 0 0 0 196.608-73.045333l0.725334-0.469334C225.792 857.173333 42.666667 657.941333 42.666667 416c0-53.312 8.896-104.533333 25.258666-152.298667a466.56 466.56 0 0 0 73.493334 197.269334C166.826667 225.749333 366.058667 42.666667 608 42.666667zM512 352a160 160 0 1 0 0 320 160 160 0 0 0 0-320z" fill="#e16531"/>
-        </g>
-      </g>
-    </svg>`;
-    const icon = new T.Icon({
-      iconUrl: "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg),
-      iconSize: new T.Point(60, 80),
-      iconAnchor: new T.Point(30, 45)
+    // 台风图标（使用PNG图片）
+    const typhoonIcon = new T.Icon({
+      iconUrl: require('../icons/typhoon.png'),
+      iconSize: new T.Point(60, 60),
+      iconAnchor: new T.Point(30, 30)
     });
-    const marker = new T.Marker(new T.LngLat(currentPos[1], currentPos[0]), { icon });
+    const marker = new T.Marker(new T.LngLat(currentPos[1], currentPos[0]), { icon: typhoonIcon });
     map.addOverLay(marker);
     layer.push(marker);
   }, [libLoaded, mapReady, mapInstanceRef, typhoonLayerRef]);
