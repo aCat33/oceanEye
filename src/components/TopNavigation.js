@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { 
     Bell, Wifi, WifiOff, PenTool, FileUp, CloudLightning, Cloud, 
     Wind, Mountain, Anchor, Target, MapIcon, Search, Sun, Moon 
@@ -13,7 +13,9 @@ const TopNavigation = ({
     handleImportClick, 
     showWeather, 
     setShowWeather, 
-    typhoonData,
+    typhoonList,
+    currentTyphoonIndex,
+    setCurrentTyphoonIndex,
     mapInstance, 
     handleRefresh,
     searchQuery,
@@ -25,6 +27,7 @@ const TopNavigation = ({
     filteredItems,
     handleLocateItem
 }) => {
+    const [showTyphoonMenu, setShowTyphoonMenu] = useState(false);
     return (
         <div className="h-14 bg-slate-800 border-b border-slate-700 flex items-center justify-between px-4 z-20 shadow-lg shrink-0">
             <div className="flex items-center gap-2">
@@ -92,9 +95,48 @@ const TopNavigation = ({
                 <button onClick={() => setShowWeather(!showWeather)} className={`flex items-center gap-1 text-xs px-3 py-1.5 rounded border transition-colors ${showWeather?'bg-sky-600 border-sky-400 text-white':'bg-slate-700 border-slate-600 text-slate-300'}`}>
                     {showWeather ? <CloudLightning size={14} /> : <Cloud size={14} />} 气象
                 </button>
-                <button onClick={() => { if (mapInstance && window.T) { const pos = typhoonData.path[typhoonData.currentIdx]; mapInstance.centerAndZoom(new window.T.LngLat(pos[1], pos[0]), 6); }}} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-red-600/20 border border-red-500 text-red-200 hover:bg-red-600/40">
-                    <Wind size={14} /> 台风
-                </button>
+                
+                {/* 台风按钮 - 带下拉菜单 */}
+                <div className="relative">
+                    <button 
+                        onClick={() => setShowTyphoonMenu(!showTyphoonMenu)} 
+                        className="flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-red-600/20 border border-red-500 text-red-200 hover:bg-red-600/40"
+                    >
+                        <Wind size={14} /> 台风 ({typhoonList.length})
+                    </button>
+                    {showTyphoonMenu && (
+                        <div className="absolute top-full mt-1 right-0 bg-slate-800 border border-slate-700 rounded shadow-xl z-50 min-w-[220px]">
+                            {typhoonList.map((typhoon, index) => (
+                                <div 
+                                    key={typhoon.id}
+                                    className={`px-3 py-2 hover:bg-slate-700 cursor-pointer border-b border-slate-700/50 last:border-0 ${currentTyphoonIndex === index ? 'bg-red-600/20' : ''}`}
+                                    onClick={() => {
+                                        setCurrentTyphoonIndex(index);
+                                        setShowTyphoonMenu(false);
+                                        if (mapInstance && window.T) {
+                                            const pos = typhoon.path[typhoon.currentIdx];
+                                            mapInstance.centerAndZoom(new window.T.LngLat(pos[1], pos[0]), 6);
+                                        }
+                                    }}
+                                >
+                                    <div className="flex items-center justify-between gap-2">
+                                        <div className="flex items-center gap-2">
+                                            <Wind size={12} className="text-red-400" />
+                                            <div className="text-xs">
+                                                <div className="font-medium text-slate-200">{typhoon.name}</div>
+                                                <div className="text-[10px] text-slate-400">{typhoon.level} · {typhoon.time}</div>
+                                            </div>
+                                        </div>
+                                        {currentTyphoonIndex === index && (
+                                            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                
                 <button onClick={() => { if (mapInstance && window.T) { mapInstance.centerAndZoom(new window.T.LngLat(87.0, 45.5), 6); }}} className="flex items-center gap-1 text-xs px-3 py-1.5 rounded bg-amber-600/30 border border-amber-600 text-amber-200 hover:bg-amber-600/50">
                     <Mountain size={14} /> 盆地
                 </button>

@@ -6,7 +6,7 @@ import PlaybackControls from './components/PlaybackControls';
 import SidebarPanel from './components/SidebarPanel';
 import RouteDataPreview from './components/RouteDataPreview';
 import { Loader2 } from './components/Icons';
-import { generateData, generateWeatherData, TYPHOON_DATA } from './utils/dataGenerator';
+import { generateData, generateWeatherData, TYPHOON_DATA, TYPHOON_DATA_2, TYPHOON_DATA_3 } from './utils/dataGenerator';
 import { renderMarkersForTianditu } from './utils/markerUtils';
 import { 
   useMapInitialization, 
@@ -44,6 +44,10 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [isDarkMap, setIsDarkMap] = useState(true);
+  const [currentTyphoonIndex, setCurrentTyphoonIndex] = useState(0);
+
+  const typhoonList = useMemo(() => [TYPHOON_DATA, TYPHOON_DATA_2, TYPHOON_DATA_3], []);
+  const currentTyphoon = useMemo(() => typhoonList[currentTyphoonIndex], [typhoonList, currentTyphoonIndex]);
 
   const activeAlarms = useMemo(() => allItems.filter(i => i.isAlarm), [allItems]);
   const filteredItems = useMemo(() => {
@@ -100,7 +104,7 @@ export default function App() {
   useMapInitialization(libLoaded, mapContainerRef, mapInstanceRef, tileLayerRef, weatherLayerRef, routeLayerRef, markersLayerRef, typhoonLayerRef, playbackLayerRef, importLayerRef, drawingLayerRef, setMapReady);
   useTileLayerSwitch(mapInstanceRef, tileLayerRef, isOfflineMode, libLoaded);
   useWeatherLayer(mapInstanceRef, weatherLayerRef, weatherData, showWeather, libLoaded);
-  useTyphoonLayer(mapInstanceRef, typhoonLayerRef, mapReady, libLoaded);
+  useTyphoonLayer(mapInstanceRef, typhoonLayerRef, mapReady, libLoaded, currentTyphoon);
 
   // 绘图模式逻辑
   useEffect(() => {
@@ -417,7 +421,9 @@ export default function App() {
         handleImportClick={handleImportClick}
         showWeather={showWeather}
         setShowWeather={setShowWeather}
-        typhoonData={TYPHOON_DATA}
+        typhoonList={typhoonList}
+        currentTyphoonIndex={currentTyphoonIndex}
+        setCurrentTyphoonIndex={setCurrentTyphoonIndex}
         mapInstance={mapInstanceRef.current}
         handleRefresh={handleRefresh}
         searchQuery={searchQuery}

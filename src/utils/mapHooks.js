@@ -158,9 +158,9 @@ export const useWeatherLayer = (mapInstanceRef, weatherLayerRef, weatherData, sh
   }, [libLoaded, weatherData, showWeather]);
 };
 
-export const useTyphoonLayer = (mapInstanceRef, typhoonLayerRef, mapReady, libLoaded) => {
+export const useTyphoonLayer = (mapInstanceRef, typhoonLayerRef, mapReady, libLoaded, typhoonData) => {
   useEffect(() => {
-    if (!mapInstanceRef.current || !typhoonLayerRef.current || !libLoaded) return;
+    if (!mapInstanceRef.current || !typhoonLayerRef.current || !libLoaded || !typhoonData) return;
     if (!window.T) return;
 
     const T = window.T;
@@ -171,7 +171,7 @@ export const useTyphoonLayer = (mapInstanceRef, typhoonLayerRef, mapReady, libLo
     layer.forEach(overlay => map.removeOverLay(overlay));
     layer.length = 0;
     
-    const t = TYPHOON_DATA; 
+    const t = typhoonData; 
     const currentPos = t.path[t.currentIdx];
 
     // 只绘制12级风圈（红色）
@@ -222,7 +222,7 @@ export const useTyphoonLayer = (mapInstanceRef, typhoonLayerRef, mapReady, libLo
         const content = `
           <div style="padding: 15px; min-width: 280px; font-family: Arial, sans-serif;">
             <div style="background: #3b82f6; color: white; padding: 10px; margin: -15px -15px 10px -15px; font-size: 16px; font-weight: bold;">
-              【天琴】${p1[3] || '时间未知'}
+              ${t.name} - ${p1[3] || '时间未知'}
             </div>
             <div style="margin: 8px 0; font-size: 14px;">
               <strong style="color: #3b82f6;">中心位置：</strong>东经${p1[1].toFixed(1)}° 北纬${p1[0].toFixed(1)}°
@@ -261,7 +261,7 @@ export const useTyphoonLayer = (mapInstanceRef, typhoonLayerRef, mapReady, libLo
       const content = `
         <div style="padding: 15px; min-width: 280px; font-family: Arial, sans-serif;">
           <div style="background: #3b82f6; color: white; padding: 10px; margin: -15px -15px 10px -15px; font-size: 16px; font-weight: bold;">
-            【天琴】${currentPoint[3] || '时间未知'}
+              ${t.name} - ${currentPoint[3] || '时间未知'}
           </div>
           <div style="margin: 8px 0; font-size: 14px;">
             <strong style="color: #3b82f6;">中心位置：</strong>东经${currentPoint[1].toFixed(1)}° 北纬${currentPoint[0].toFixed(1)}°
@@ -314,7 +314,7 @@ export const useTyphoonLayer = (mapInstanceRef, typhoonLayerRef, mapReady, libLo
           const content = `
             <div style="padding: 15px; min-width: 280px; font-family: Arial, sans-serif;">
               <div style="background: #3b82f6; color: white; padding: 10px; margin: -15px -15px 10px -15px; font-size: 16px; font-weight: bold;">
-                【天琴】${p1[3] || '时间未知'} (预测)
+                ${t.name} - ${p1[3] || '时间未知'} (预测)
               </div>
               <div style="margin: 8px 0; font-size: 14px;">
                 <strong style="color: #3b82f6;">中心位置：</strong>东经${p1[1].toFixed(1)}° 北纬${p1[0].toFixed(1)}°
@@ -355,7 +355,7 @@ export const useTyphoonLayer = (mapInstanceRef, typhoonLayerRef, mapReady, libLo
         const content = `
           <div style="padding: 15px; min-width: 280px; font-family: Arial, sans-serif;">
             <div style="background: #3b82f6; color: white; padding: 10px; margin: -15px -15px 10px -15px; font-size: 16px; font-weight: bold;">
-              【天琴】${lastPoint[3] || '时间未知'} (预测)
+              ${t.name} - ${lastPoint[3] || '时间未知'} (预测)
             </div>
             <div style="margin: 8px 0; font-size: 14px;">
               <strong style="color: #3b82f6;">中心位置：</strong>东经${lastPoint[1].toFixed(1)}° 北纬${lastPoint[0].toFixed(1)}°
@@ -506,5 +506,5 @@ export const useTyphoonLayer = (mapInstanceRef, typhoonLayerRef, mapReady, libLo
       layer.push(marker);
     };
     img.src = typhoonSprite;
-  }, [libLoaded, mapReady, mapInstanceRef, typhoonLayerRef]);
+  }, [libLoaded, mapReady, mapInstanceRef, typhoonLayerRef, typhoonData]);
 };
